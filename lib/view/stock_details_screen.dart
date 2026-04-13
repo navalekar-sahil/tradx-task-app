@@ -14,14 +14,31 @@ class StockDetailScreen extends StatefulWidget {
   State<StockDetailScreen> createState() => _StockDetailScreenState();
 }
 
-class _StockDetailScreenState extends State<StockDetailScreen> {
+class _StockDetailScreenState extends State<StockDetailScreen> with SingleTickerProviderStateMixin {
 
   late StockModel stock;
+
+
+  late AnimationController _controller;
+  late Animation<double> _animation;
+
 
   @override
   void initState() {
     super.initState();
     stock = widget.stock;
+
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1000),
+    );
+
+    _animation = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeInOut,
+    );
+
+    _controller.forward();
   }
 
   @override
@@ -31,10 +48,10 @@ class _StockDetailScreenState extends State<StockDetailScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        titleSpacing: 0,
-        title:  Text("TradeX Lite",  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-          fontWeight: FontWeight.w600,
-        ),)
+          titleSpacing: 0,
+          title:  Text("TradeX Lite",  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+            fontWeight: FontWeight.w600,
+          ),)
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
@@ -83,7 +100,12 @@ class _StockDetailScreenState extends State<StockDetailScreen> {
                 height: 200,
                 padding: const EdgeInsets.all(12),
                 decoration: _cardDecoration(isDark),
-                child: LineChart(_buildChart()),
+                child: AnimatedBuilder(
+                  animation: _animation,
+                  builder: (context, child) {
+                    return LineChart(_buildChart());
+                  },
+                ),
               ),
 
 
@@ -188,6 +210,18 @@ class _StockDetailScreenState extends State<StockDetailScreen> {
   }
 
   LineChartData _buildChart() {
+    int total = stock.history.length;
+
+    int visiblePoints = (total * _animation.value).floor();
+
+    final visibleSpots = stock.history
+        .take(visiblePoints > 0 ? visiblePoints : 1) // avoid empty crash
+        .toList()
+        .asMap()
+        .entries
+        .map((e) => FlSpot(e.key.toDouble(), e.value.toDouble()))
+        .toList();
+
     return LineChartData(
       gridData: FlGridData(show: false),
       titlesData: FlTitlesData(show: false),
@@ -195,18 +229,25 @@ class _StockDetailScreenState extends State<StockDetailScreen> {
       lineBarsData: [
         LineChartBarData(
           isCurved: true,
-          spots: stock.history
-              .asMap()
-              .entries
-              .map((e) => FlSpot(e.key.toDouble(), e.value.toDouble()))
-              .toList(),
+          spots: visibleSpots,
           dotData: FlDotData(show: false),
-          belowBarData: BarAreaData(show: true),
+          color: stock.change >= 0 ? Colors.green : Colors.red,
+          belowBarData: BarAreaData(
+            show: true,
+            gradient: LinearGradient(
+              colors: [
+                (stock.change >= 0 ? Colors.green : Colors.red)
+                    .withOpacity(0.3),
+                Colors.transparent
+              ],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+            ),
+          ),
         )
       ],
     );
   }
-
   BoxDecoration _cardDecoration(bool isDark) {
     return BoxDecoration(
       color: isDark ? Colors.grey[900] : Colors.white,

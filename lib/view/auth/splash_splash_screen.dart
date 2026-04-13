@@ -21,10 +21,10 @@ class _SplashScreenState extends State<SplashScreen>
 
     controller = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 2),
+      duration: const Duration(seconds: 1),
     );
 
-    scale = Tween(begin: 0.85, end: 1.0).animate(
+    scale = Tween(begin: 0.75, end: 1.0).animate(
       CurvedAnimation(parent: controller, curve: Curves.easeOut),
     );
 
@@ -33,7 +33,7 @@ class _SplashScreenState extends State<SplashScreen>
     );
 
     slide = Tween(
-      begin: const Offset(0, 0.15),
+      begin: const Offset(0, 0.1),
       end: Offset.zero,
     ).animate(
       CurvedAnimation(parent: controller, curve: Curves.easeOut),

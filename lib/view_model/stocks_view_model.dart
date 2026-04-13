@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
 import 'package:trade_x_lite/utils/components/snackbar.dart';
 import '../model/stock_model.dart';
 import '../repository/stock_repository.dart';
@@ -28,10 +29,19 @@ class StockViewModel extends ChangeNotifier {
   bool get hasMore => _hasMore;
 
   Future<void> loadStocks() async {
+    final box = Hive.box('historyBox');
+
     _allStocks = await _dataRepo.loadStocks();
 
-    _filteredStocks = _allStocks;
+    for (var stock in _allStocks) {
+      final savedHistory = box.get(stock.symbol);
 
+      if (savedHistory != null) {
+        stock.history = List<double>.from(savedHistory);
+      }
+    }
+
+    _filteredStocks = _allStocks;
     _resetPagination();
 
     startRealtimeUpdates();
@@ -83,16 +93,21 @@ class StockViewModel extends ChangeNotifier {
 
   void _updatePrices() {
     final random = Random();
+    final box = Hive.box('historyBox');
 
     for (var stock in _allStocks) {
       double change = (random.nextDouble() - 0.5) * 4;
+
       stock.price += change;
       stock.change = change;
 
       stock.history.add(stock.price);
+
       if (stock.history.length > 20) {
         stock.history.removeAt(0);
       }
+
+      box.put(stock.symbol, stock.history);
     }
 
     notifyListeners();

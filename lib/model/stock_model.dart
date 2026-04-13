@@ -3,7 +3,7 @@ class StockModel {
   final String name;
   double price;
   double change;
-  final List<double> history;
+  List<double> history;
   final double high, low, open, close;
   final int volume;
   final String marketCap;

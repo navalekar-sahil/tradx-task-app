@@ -20,11 +20,11 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
 
     _scrollController.addListener(() {
-      final vm = context.read<StockViewModel>();
+      final stockVm = context.read<StockViewModel>();
 
       if (_scrollController.position.pixels >=
           _scrollController.position.maxScrollExtent - 200) {
-        vm.loadMore();
+        stockVm.loadMore();
       }
     });
   }
@@ -94,19 +94,21 @@ class _HomeScreenState extends State<HomeScreen> {
             Expanded(
               child: Consumer<StockViewModel>(
                 builder: (context, stockVm, _) {
+
                   if (stockVm.stocks.isEmpty) {
                     return const Center(child: CircularProgressIndicator());
                   }
 
                   return ListView.builder(
                     controller: _scrollController,
-                    itemCount: stockVm.stocks.length +
-                        (stockVm.hasMore ? 1 : 0),
+                    itemCount: stockVm.stocks.length + (stockVm.hasMore ? 1 : 0),
                     itemBuilder: (context, index) {
                       if (index < stockVm.stocks.length) {
                         final stock = stockVm.stocks[index];
                         return StockItemCard(
-                            stock: stock, isDark: isDark);
+                            stock: stock,
+                            isDark: isDark
+                        );
                       } else {
                         return const Padding(
                           padding: EdgeInsets.all(16),
@@ -133,7 +135,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _chip(String text, String type, StockViewModel vm, bool isDark) {
+  Widget _chip(String text, String type, StockViewModel stockVm, bool isDark) {
     final isSelected = selectedFilter == type;
 
     return Padding(
@@ -142,8 +144,8 @@ class _HomeScreenState extends State<HomeScreen> {
         label: Text(text),
         selected: isSelected,
         onSelected: (_) {
-          vm.filter(type);
-          vm.filter(type);
+          stockVm.filter(type);
+          stockVm.filter(type);
           setState(() => selectedFilter = type);
         },
         selectedColor:
